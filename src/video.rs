@@ -15,8 +15,24 @@ pub trait VideoDetailPage: Send + Sync {
     async fn extract_video(&self) -> AppResult<Option<Video>>;
 }
 
-pub async fn download_video(page: &dyn VideoDetailPage) -> AppResult<()> {
-    let video = page.extract_video().await?;
+pub async fn download_video(page: &dyn VideoDetailPage, retry: usize) -> AppResult<()> {
+    let mut retry_times = retry;
+    let video: Option<Video> = loop {
+        match page.extract_video().await {
+            Ok(video) => {
+                break video;
+            }
+            Err(e) => {
+                if retry_times > 0 {
+                    tokio::time::sleep(Duration::from_secs(2)).await;
+                    log::info!("【剩余重试次数】 {}", retry_times);
+                    retry_times -= 1;
+                } else {
+                    anyhow::bail!("{}", e.to_string());
+                }
+            }
+        }
+    };
     if let Some(video) = video {
         let video_name = format!("【{}】{}.mp4", &video.author, &video.title);
         log::info!("【下载中...】");

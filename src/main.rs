@@ -20,7 +20,7 @@ async fn main() {
     }
     let url = url.unwrap();
     if let Some(page) = Page::from(url) {
-        if let Err(e) = download_video(&*page).await {
+        if let Err(e) = download_video(&*page, 2).await {
             log::error!("{}", e.to_string());
             exit(1);
         };

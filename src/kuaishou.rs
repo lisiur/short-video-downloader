@@ -72,7 +72,7 @@ impl VideoDetailPage for KuaishouVideoDetailPage {
             }))
         } else {
             log::error!("【查询视频地址失败】 {}", data);
-            Ok(None)
+            anyhow::bail!("查询视频地址失败")
         }
     }
 }
