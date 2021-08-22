@@ -10,18 +10,24 @@ use std::process::exit;
 type AppResult<T> = anyhow::Result<T>;
 
 #[tokio::main]
-async fn main() -> AppResult<()> {
+async fn main() {
+    env_logger::init();
     let args = std::env::args().collect::<Vec<String>>();
     let url = args.get(1);
     if url.is_none() {
-        println!("请提供下载地址");
+        log::error!("请提供分享短地址");
         exit(1);
     }
     let url = url.unwrap();
     if let Some(page) = Page::from(url) {
-        download_video(&*page).await.unwrap();
+        if let Err(e) = download_video(&*page).await {
+            log::error!("{}", e.to_string());
+            exit(1);
+        };
+    } else {
+        log::error!("未识别的短地址");
+        exit(1);
     }
-    Ok(())
 }
 
 struct Page;

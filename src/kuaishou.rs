@@ -2,6 +2,7 @@ use crate::video::{Video, VideoDetailPage};
 use crate::AppResult;
 use async_trait::async_trait;
 use reqwest;
+use std::sync::Arc;
 use std::time::Duration;
 
 pub struct KuaishouVideoDetailPage {
@@ -18,23 +19,23 @@ impl KuaishouVideoDetailPage {
 
 #[async_trait]
 impl VideoDetailPage for KuaishouVideoDetailPage {
-    fn get_url(&self) -> &str {
-        &self.url
-    }
-
     async fn extract_video(&self) -> AppResult<Option<Video>> {
-        println!("【解析短地址...】 {}", self.url);
+        let cookie_store = Arc::new(reqwest::cookie::Jar::default());
+        log::info!("【解析短地址...】 {}", self.url);
         let client = reqwest::Client::builder()
             .timeout(Duration::from_secs(20))
-            .cookie_store(true)
+            .cookie_provider(cookie_store.clone())
+            // .cookie_store(true)
             .build()?;
         let resp = client.get(&self.url).send().await?;
         let url = resp.url();
-        println!("【短地址解析成功】 {}", url.as_str());
+        log::info!("【短地址解析成功】 {}", url.as_str());
         let id = url.path().split("/").last().unwrap().to_string();
         let payload = query_template(&id);
-        println!("【查询视频地址...】");
+        log::info!("【查询视频地址...】");
         let did = std::fs::read_to_string("./did.txt").map_or(None, |v| Some(v.trim().to_string()));
+
+        log::debug!("{:?}", cookie_store);
         let mut instance = client
             .post("https://www.kuaishou.com/graphql")
             .header("Host", "www.kuaishou.com")
@@ -63,14 +64,14 @@ impl VideoDetailPage for KuaishouVideoDetailPage {
         let video_src = &data["data"]["visionVideoDetail"]["photo"]["photoUrl"];
 
         if author_name.is_string() && video_title.is_string() && video_src.is_string() {
-            println!("【查询视频地址成功】 {}", video_src);
+            log::info!("【查询视频地址成功】 {}", video_src);
             Ok(Some(Video {
                 author: author_name.as_str().unwrap().to_string(),
                 title: video_title.as_str().unwrap().to_string(),
                 src: video_src.as_str().unwrap().to_string(),
             }))
         } else {
-            println!("【查询视频地址失败】 {}", data);
+            log::error!("【查询视频地址失败】 {}", data);
             Ok(None)
         }
     }
