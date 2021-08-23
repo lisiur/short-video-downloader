@@ -71,7 +71,7 @@ impl VideoDetailPage for KuaishouVideoDetailPage {
                 src: video_src.as_str().unwrap().to_string(),
             }))
         } else {
-            log::error!("【查询视频地址失败】 {}", data);
+            log::info!("【查询视频地址失败】");
             anyhow::bail!("查询视频地址失败")
         }
     }

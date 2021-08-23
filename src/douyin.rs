@@ -43,12 +43,12 @@ impl VideoDetailPage for DouyinVideoDetailPage {
                         src: "https:".to_string() + video_src.as_str().unwrap(),
                     }))
                 } else {
-                    log::error!("【查询视频地址失败】");
+                    log::info!("【查询视频地址失败】");
                     Ok(None)
                 }
             }
             None => {
-                log::error!("【解析 RENDER_DATA 失败】 未找到");
+                log::info!("【解析 RENDER_DATA 失败】 未找到");
                 Ok(None)
             }
         }

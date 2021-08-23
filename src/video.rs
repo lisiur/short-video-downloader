@@ -24,8 +24,8 @@ pub async fn download_video(page: &dyn VideoDetailPage, retry: usize) -> AppResu
             }
             Err(e) => {
                 if retry_times > 0 {
-                    tokio::time::sleep(Duration::from_secs(2)).await;
                     log::info!("【剩余重试次数】 {}", retry_times);
+                    // tokio::time::sleep(Duration::from_secs(2)).await;
                     retry_times -= 1;
                 } else {
                     anyhow::bail!("{}", e.to_string());
