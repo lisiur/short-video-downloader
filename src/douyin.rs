@@ -19,7 +19,7 @@ impl DouyinVideoDetailPage {
 impl VideoDetailPage for DouyinVideoDetailPage {
     async fn extract_video(&self) -> AppResult<Option<Video>> {
         log::info!("【解析短地址...】 {}", self.url);
-        let resp = reqwest::get(&self.url).await?;
+        let resp = reqwest::blocking::get(&self.url)?;
         let text = resp.text().await?;
         let document = Html::parse_document(&text);
         let selector = Selector::parse("#RENDER_DATA").unwrap();
@@ -32,16 +32,28 @@ impl VideoDetailPage for DouyinVideoDetailPage {
                     .decode_utf8()
                     .unwrap();
                 let data: serde_json::Value = serde_json::from_str(&content)?;
-                let author_name = &data["C_14"]["aweme"]["detail"]["authorInfo"]["nickname"];
-                let video_title = &data["C_14"]["aweme"]["detail"]["desc"];
-                let video_src = &data["C_14"]["aweme"]["detail"]["video"]["playAddr"][0]["src"];
-                if author_name.is_string() && video_title.is_string() && video_src.is_string() {
-                    log::info!("【查询视频地址成功】 {}", video_src);
-                    Ok(Some(Video {
-                        author: author_name.as_str().unwrap().to_string(),
-                        title: video_title.as_str().unwrap().to_string(),
-                        src: "https:".to_string() + video_src.as_str().unwrap(),
-                    }))
+                let mut key = None;
+                for i in 1..100 {
+                    if data[format!("C_{}", i)]["aweme"].is_object() {
+                        key = Some(format!("C_{}", i));
+                        break;
+                    }
+                }
+                if let Some(key) = key {
+                    let author_name = &data[&key]["aweme"]["detail"]["authorInfo"]["nickname"];
+                    let video_title = &data[&key]["aweme"]["detail"]["desc"];
+                    let video_src = &data[&key]["aweme"]["detail"]["video"]["playAddr"][0]["src"];
+                    if author_name.is_string() && video_title.is_string() && video_src.is_string() {
+                        log::info!("【查询视频地址成功】 {}", video_src);
+                        Ok(Some(Video {
+                            author: author_name.as_str().unwrap().to_string(),
+                            title: video_title.as_str().unwrap().to_string(),
+                            src: "https:".to_string() + video_src.as_str().unwrap(),
+                        }))
+                    } else {
+                        log::info!("【查询视频地址失败】");
+                        Ok(None)
+                    }
                 } else {
                     log::info!("【查询视频地址失败】");
                     Ok(None)

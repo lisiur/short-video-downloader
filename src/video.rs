@@ -33,8 +33,12 @@ pub async fn download_video(page: &dyn VideoDetailPage, retry: usize) -> AppResu
             }
         }
     };
+
     if let Some(video) = video {
         let video_name = format!("【{}】{}.mp4", &video.author, &video.title);
+        let mut video_save_path = std::env::current_dir()?;
+        video_save_path.push(&video_name);
+        println!("{:?}", video_save_path);
         log::info!("【下载中...】");
         let client = reqwest::Client::builder()
             .timeout(Duration::from_secs(10))
@@ -43,8 +47,10 @@ pub async fn download_video(page: &dyn VideoDetailPage, retry: usize) -> AppResu
         log::info!("【下载成功】 {}", video_name);
         let bytes = resp.bytes().await?;
         let mut slice: &[u8] = bytes.as_ref();
-        let mut out = File::create(&video_name)?;
+        let mut out = File::create(&video_save_path)?;
         std::io::copy(&mut slice, &mut out)?;
+        Ok(())
+    } else {
+        anyhow::bail!("未分析出视频地址")
     }
-    Ok(())
 }

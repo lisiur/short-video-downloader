@@ -7,20 +7,15 @@ use crate::page::Page;
 use crate::video::download_video;
 use std::process::exit;
 use tokio::task::JoinHandle;
-
+use wasm_bindgen::prelude::*;
 type AppResult<T> = anyhow::Result<T>;
 
-#[tokio::main]
-async fn main() {
-    env_logger::init();
-    let mut args = std::env::args();
-    if args.len() < 2 {
-        log::info!("请提供分享短地址");
-        exit(1);
-    }
-    args.next();
-    let urls = args
+#[no_mangle]
+pub async fn download(arg: String) -> AppResult<()> {
+    let urls = arg
+        .split(" ")
         .filter(|arg| arg.starts_with("http"))
+        .map(|s| s.to_string())
         .collect::<Vec<String>>();
     let tasks = urls
         .into_iter()
@@ -47,4 +42,5 @@ async fn main() {
             println!("第{}个下载成功!", i + 1);
         }
     }
+    Ok(())
 }

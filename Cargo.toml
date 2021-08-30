@@ -6,8 +6,8 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-reqwest = { version = "0.11", features = ["json", "cookies"] }
-tokio = { version = "1", features=["rt", "macros", "rt-multi-thread", "time"]}
+reqwest = { version = "0.11", features = ["json", "blocking", "cookies"] }
+tokio = { version = "1", features=["rt", "sync", "macros", "rt-multi-thread", "time"]}
 scraper = "0.12.0"
 async-trait = "0.1.51"
 serde = "1.0.127"
@@ -16,8 +16,12 @@ anyhow = "1.0.43"
 percent-encoding = "2.1.0"
 log = "0.4.14"
 env_logger = "0.9.0"
+wasm-bindgen = "0.2.76"
 
-[profile.release]
-lto = true
-opt-level = "s"
-panic = "abort"
+#[lib]
+#crate-type = ["cdylib", "rlib"]
+
+#[profile.release]
+#lto = true
+#opt-level = "s"
+#panic = "abort"

@@ -22,12 +22,12 @@ impl VideoDetailPage for KuaishouVideoDetailPage {
     async fn extract_video(&self) -> AppResult<Option<Video>> {
         let cookie_store = Arc::new(reqwest::cookie::Jar::default());
         log::info!("【解析短地址...】 {}", self.url);
-        let client = reqwest::Client::builder()
+        let client = reqwest::blocking::Client::builder()
             .timeout(Duration::from_secs(20))
             .cookie_provider(cookie_store.clone())
             // .cookie_store(true)
             .build()?;
-        let resp = client.get(&self.url).send().await?;
+        let resp = client.get(&self.url).send()?;
         let url = resp.url();
         log::info!("【短地址解析成功】 {}", url.as_str());
         let id = url.path().split("/").last().unwrap().to_string();
@@ -57,8 +57,8 @@ impl VideoDetailPage for KuaishouVideoDetailPage {
                 format!("did={}; kpf=PC_WEB; kpn=KUAISHOU_VISION; clientid=3", did),
             );
         }
-        let res = instance.json(&payload).send().await?;
-        let data: serde_json::Value = res.json().await?;
+        let res = instance.json(&payload).send()?;
+        let data: serde_json::Value = res.json()?;
         let author_name = &data["data"]["visionVideoDetail"]["author"]["name"];
         let video_title = &data["data"]["visionVideoDetail"]["photo"]["caption"];
         let video_src = &data["data"]["visionVideoDetail"]["photo"]["photoUrl"];
